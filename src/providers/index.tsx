@@ -2,6 +2,7 @@
 import { MiniKitProvider } from '@worldcoin/minikit-js/minikit-provider';
 import { Session } from 'next-auth';
 import { SessionProvider } from 'next-auth/react';
+import { ThemeProvider } from 'next-themes';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 
@@ -26,7 +27,10 @@ interface ClientProvidersProps {
  * - MiniKitProvider:
  *     - Required for MiniKit functionality.
  *
- * This component ensures both providers are available to all child components.
+ * - ThemeProvider:
+ *     - Enables dark/light mode functionality.
+ *
+ * This component ensures all providers are available to all child components.
  */
 export default function ClientProviders({
   children,
@@ -35,7 +39,14 @@ export default function ClientProviders({
   return (
     <ErudaProvider>
       <MiniKitProvider>
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionProvider session={session}>{children}</SessionProvider>
+        </ThemeProvider>
       </MiniKitProvider>
     </ErudaProvider>
   );
