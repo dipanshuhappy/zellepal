@@ -10,18 +10,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, CreditCard, Share2, CheckCircle, DollarSign, User, Building2, Zap, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import '@/app/button-styles.css';
-import { generatePaymentCode } from './(actions)/payment-code';
+import { generatePaymentCode, validatePaymentCode } from './(actions)/payment-code';
+import { useRouter } from 'next/navigation';
 
-// Type definitions
-interface PaymentData {
-  id: string;
-  amount: number;
-  recipient: string;
-  zelleId: string;
-  isBusiness: boolean;
-  fees: number;
-  total: number;
-}
+
 
 interface GeneratedPayment {
   code: string;
@@ -30,11 +22,6 @@ interface GeneratedPayment {
   total: number;
   createdAt: string;
   expiresAt: string;
-}
-
-interface ValidatePaymentResponse {
-  valid: boolean;
-  payment?: PaymentData;
 }
 
 interface ProcessPaymentResponse {
@@ -54,73 +41,44 @@ interface GeneratePaymentFormProps {
   generatedPayment: GeneratedPayment | null;
 }
 
-interface PaymentConfirmationProps {
-  paymentData: PaymentData;
-  onConfirm: () => void;
-  isLoading: boolean;
-}
 
-// Mock API functions with TypeScript types
-const mockAPI = {
-  validatePaymentCode: async (code: string): Promise<ValidatePaymentResponse> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    if (code === 'DEMO1') {
-      return {
-        valid: true,
-        payment: {
-          id: 'pay_123',
-          amount: 250.00,
-          recipient: 'Alice Johnson',
-          zelleId: 'alice.johnson@email.com',
-          isBusiness: false,
-          fees: 12.50,
-          total: 262.50
-        }
-      };
-    }
-    return { valid: false };
-  },
-  
-  generatePayment: async (amount: number): Promise<GeneratedPayment> => {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const code = Math.random().toString(36).substring(2, 7).toUpperCase();
-    const fees = amount * 0.05;
-    return {
-      code,
-      amount,
-      fees,
-      total: amount + fees,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    };
-  },
-  
-  processPayment: async (code: string): Promise<ProcessPaymentResponse> => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    return {
-      success: true,
-      transactionId: 'txn_' + Math.random().toString(36).substring(2, 10),
-      message: 'Payment initiated successfully!'
-    };
-  }
-};
+
 
 const PaymentCodeInput: React.FC<PaymentCodeInputProps> = ({ onCodeSubmit, isLoading }) => {
   const [code, setCode] = useState<string[]>(['', '', '', '', '']);
   const [isComplete, setIsComplete] = useState<boolean>(false);
 
-  const handleCodeChange = (index: number, value: string): void => {
-    if (value.length > 1) return;
-    
+  const handleCodeChange = (index: number, value: string, isPaste: boolean = false): void => {
     const newCode = [...code];
-    newCode[index] = value.toUpperCase();
-    setCode(newCode);
     
-    // Auto-focus next input
-    if (value && index < 4) {
-      const nextInput = document.getElementById(`code-${index + 1}`);
-      nextInput?.focus();
+    if (isPaste) {
+      // Handle pasted content - take first 5 characters and distribute to inputs
+      const pastedCode = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // Remove non-alphanumeric chars
+      const maxLength = Math.min(pastedCode.length, 5); // Only take up to 5 characters
+      
+      for (let i = 0; i < maxLength; i++) {
+        if (i + index < 5) { // Ensure we don't go out of bounds
+          newCode[i + index] = pastedCode[i];
+        }
+      }
+      
+      // Focus the last input that was filled
+      const lastFilledIndex = Math.min(index + maxLength - 1, 4);
+      const lastInput = document.getElementById(`code-${lastFilledIndex}`);
+      lastInput?.focus();
+    } else {
+      // Handle single character input
+      if (value.length > 1) return;
+      newCode[index] = value.toUpperCase();
+      
+      // Auto-focus next input for single character input
+      if (value && index < 4) {
+        const nextInput = document.getElementById(`code-${index + 1}`);
+        nextInput?.focus();
+      }
     }
+    
+    setCode(newCode);
     
     // Check if complete
     const complete = newCode.every(digit => digit !== '');
@@ -128,6 +86,15 @@ const PaymentCodeInput: React.FC<PaymentCodeInputProps> = ({ onCodeSubmit, isLoa
     
     if (complete) {
       onCodeSubmit(newCode.join(''));
+    }
+  };
+  
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, index: number) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+    console.log({pastedText})
+    if (pastedText) {
+      handleCodeChange(index, pastedText, true);
     }
   };
 
@@ -154,7 +121,8 @@ const PaymentCodeInput: React.FC<PaymentCodeInputProps> = ({ onCodeSubmit, isLoa
             id={`code-${index}`}
             type="text"
             value={digit}
-            onChange={(e) => handleCodeChange(index, e.target.value)}
+            onChange={(e) => handleCodeChange(index, e.target.value, false)}
+            onPaste={(e) => handlePaste(e, index)}
             onKeyDown={(e) => handleKeyDown(index, e)}
             className="w-12 h-12 text-center text-xl font-bold border-2 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900 transition-all duration-200 hover:border-blue-400"
             maxLength={1}
@@ -218,7 +186,7 @@ const GeneratePaymentForm: React.FC<GeneratePaymentFormProps> = ({ onGenerate, i
           <div className="grid grid-cols-2 gap-4">
             <Button 
               className="btn btn-lg btn-primary w-full" style={{ minWidth: '120px' }}
-              onClick={() => window.location.href = `/pay/${generatedPayment.code}`}
+              onClick={() => window.location.href = `/app/pay/${generatedPayment.code}`}
             >
               <CreditCard className="w-4 h-4 mr-2" />
               Pay Now
@@ -321,147 +289,36 @@ const GeneratePaymentForm: React.FC<GeneratePaymentFormProps> = ({ onGenerate, i
   );
 };
 
-const PaymentConfirmation: React.FC<PaymentConfirmationProps> = ({ paymentData, onConfirm, isLoading }) => {
-  type Step = 'start' | 'details' | 'confirm';
-  const [step, setStep] = useState<Step>('start');
 
-  const handleStartPayment = (): void => {
-    setStep('details');
-  };
-
-  const handleConfirmPayment = () => {
-    onConfirm();
-  };
-
-  if (step === 'start') {
-    return (
-      <div className="space-y-6 text-center animate-in fade-in-50 duration-500">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Payment Ready</h1>
-          <p className="text-muted-foreground">Ready to process your payment</p>
-        </div>
-        
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-2">
-              <div className="text-3xl font-bold text-blue-700">
-                ${paymentData.amount.toFixed(2)}
-              </div>
-              <div className="text-sm text-blue-600">
-                + ${paymentData.fees.toFixed(2)} fees
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Button 
-          onClick={handleStartPayment}
-          className="w-full h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transform hover:scale-105 transition-all duration-200 text-white font-semibold shadow-lg"
-        >
-          <Zap className="w-4 h-4 mr-2" />
-          Start Payment
-        </Button>
-      </div>
-    );
-  }
-
-  if (step === 'details') {
-    return (
-      <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Payment Details</h2>
-          <p className="text-muted-foreground">Please review the payment information</p>
-        </div>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Recipient Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Name:</span>
-              <span className="font-medium">{paymentData.recipient}</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Zelle ID:</span>
-              <span className="font-mono text-sm">{paymentData.zelleId}</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Account Type:</span>
-              <Badge variant={paymentData.isBusiness ? "default" : "secondary"}>
-                {paymentData.isBusiness ? (
-                  <>
-                    <Building2 className="w-3 h-3 mr-1" />
-                    Business
-                  </>
-                ) : (
-                  <>
-                    <User className="w-3 h-3 mr-1" />
-                    Personal
-                  </>
-                )}
-              </Badge>
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Amount:</span>
-                <span>${paymentData.amount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-orange-600">
-                <span>Fees:</span>
-                <span>${paymentData.fees.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total:</span>
-                <span>${paymentData.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Button 
-          onClick={handleConfirmPayment}
-          disabled={isLoading}
-          className="w-full h-12 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white font-bold shadow-lg disabled:bg-gray-300 disabled:text-gray-500"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            'CONFIRM PAYMENT'
-          )}
-        </Button>
-      </div>
-    );
-  }
-};
 
 const ZellePayInterface: React.FC = () => {
   type View = 'main' | 'payment';
+  const router = useRouter()
   const [currentView, setCurrentView] = useState<View>('payment');
   const [paymentCode, setPaymentCode] = useState<string>('');
   const [generatedPayment, setGeneratedPayment] = useState<GeneratedPayment | null>(null);
   const queryClient = useQueryClient();
 
   // Mock React Query for payment code validation
-  const validateCodeMutation = useMutation<ValidatePaymentResponse, Error, string>({
-    mutationFn: (code: string) => mockAPI.validatePaymentCode(code),
-    onSuccess: (data) => {
-      if (data.valid && data.payment) {
-        setPaymentCode(data.payment.id);
-        setCurrentView('payment');
-        // Simulate navigation to /pay/<code>
-        window.history.pushState({}, '', `/pay/${data.payment.id}`);
+  const validateCodeMutation = useMutation<{success:boolean,code:string}, Error, string>({
+    mutationFn: async (code: string) => {
+      const response = await validatePaymentCode(code);
+      if(response.error){
+        toast.error(JSON.stringify(response.error))
+        throw new Error(response.error)
+      } 
+      return {
+        success:response.success,
+        code:code
+      }
+       
+    },
+    onSuccess: async (data) => {
+      if (data) {
+        if(data.success){
+          setCurrentView('payment');
+          router.push(`/app/pay/${data.code}`)
+        }
       }
     }
   });
@@ -470,9 +327,17 @@ const ZellePayInterface: React.FC = () => {
   const generatePaymentMutation = useMutation({
     mutationFn: async (amount: number) => {
       const data = await generatePaymentCode(amount)
-     
-    
-      return data
+      console.log({data})
+      if(!data.success && data.error){
+        toast.error(JSON.stringify(data.error))
+        console.log(data.error)
+        throw new Error('Payment code not found')
+      }
+      if(!data.data){
+        toast.error("Payment code not found")
+        throw new Error("Payment code not found")
+      }
+      return data.data
     },
     onSuccess: (data) => {
       
@@ -487,13 +352,7 @@ const ZellePayInterface: React.FC = () => {
     }
   });
 
-  // Mock React Query for payment processing
-  const processPaymentMutation = useMutation<ProcessPaymentResponse, Error, string>({
-    mutationFn: (code: string) => mockAPI.processPayment(code),
-    onSuccess: (data) => {
-      alert(`Payment successful! Transaction ID: ${data.transactionId}`);
-    }
-  });
+
 
   const handleCodeSubmit = (code: string): void => {
     validateCodeMutation.mutate(code);
@@ -503,27 +362,8 @@ const ZellePayInterface: React.FC = () => {
     generatePaymentMutation.mutate(amount);
   };
 
-  const handleConfirmPayment = () => {
-    processPaymentMutation.mutate(paymentCode);
-  };
 
-  if (currentView === 'payment' && validateCodeMutation.data?.valid) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 p-4">
-        <div className="max-w-md mx-auto pt-8">
-          <Card className="backdrop-blur-xl bg-white/70 border-white/30 shadow-2xl">
-            <CardContent className="p-6">
-              <PaymentConfirmation
-                paymentData={validateCodeMutation.data.payment}
-                onConfirm={handleConfirmPayment}
-                isLoading={processPaymentMutation.isPending}
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 p-4">

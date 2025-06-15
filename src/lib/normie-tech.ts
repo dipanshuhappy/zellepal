@@ -344,7 +344,7 @@ export interface paths {
                         images?: string[];
                         amount: number;
                         /** Format: uri */
-                        success_url: string;
+                        success_url?: string;
                         chainId?: number;
                         /** @default evm */
                         blockChainName?: string;
@@ -500,7 +500,7 @@ export interface paths {
                             data: {
                                 id: string;
                                 transactionId: string;
-                                confirmationStatus: string;
+                                confirmationStatus: "not-started-by-sender"|"wait-for-payment-details"|"payment-confirmed-by-sender"|"payment-confirmed-by-admin"|"confirmed-but-settle-later"|"failed";
                                 payoutDetails?: string;
                                 amount?: number;
                                 createdAt: string;
