@@ -193,6 +193,8 @@ export async function getPaymentDetails(code:string){
            amount:zelleDetailsData.data.amount!,
            fees: fees,
            total:total,
+           code:data.id,
+           id:data.id,
            recipient:{
             name:lpDetailsData.data.zelleName!,
             zelleId:lpDetailsData.data.zelleId!,
@@ -212,6 +214,8 @@ export async function captureZellePayment(code: string) {
 
   const supabase = await createClient();
   
+
+  console.log("hiiii")
   try {
     // Get the payment code details
     const { data: codeData, error: codeError } = await supabase
@@ -237,6 +241,7 @@ export async function captureZellePayment(code: string) {
         transactionId: transactionId,
       }
     });
+    console.log({confirmResponse})
 
     if (confirmResponse.response.status !== 200) {
       return { 
@@ -244,6 +249,8 @@ export async function captureZellePayment(code: string) {
         message: `Payment confirmation failed: ${confirmResponse.response.statusText}` 
       };
     }
+
+  
 
     // If confirmation is successful, settle the payment
     if (confirmResponse.data) {
@@ -257,7 +264,7 @@ export async function captureZellePayment(code: string) {
           transactionId: transactionId,
         }
       });
-
+      console.log({settleResponse})
       if (settleResponse.response.status === 200) {
         // Update the payment code with the settlement detailsxexe
         return { 

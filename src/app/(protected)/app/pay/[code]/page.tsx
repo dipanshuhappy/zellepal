@@ -317,6 +317,7 @@ export default function PaymentPage() {
       if (!payment) {
         throw new Error('Payment details not available');
       }
+      console.log({payment})
       const result = await captureZellePayment(payment.code);
       if (!result.success) {
         throw new Error(result.message);
