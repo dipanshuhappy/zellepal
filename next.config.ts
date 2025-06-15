@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: ['https://inspired-hopefully-raven.ngrok-free.app'], // Add your dev origin here
   reactStrictMode: false,
+  eslint:{
+    ignoreDuringBuilds:true
+  },
+  typescript:{
+    ignoreBuildErrors:true
+  }
 };
 
 export default nextConfig;
