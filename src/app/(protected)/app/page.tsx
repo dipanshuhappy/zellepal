@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, CreditCard, Share2, CheckCircle, DollarSign, User, Building2, Zap } from 'lucide-react';
+import { Loader2, CreditCard, Share2, CheckCircle, DollarSign, User, Building2, Zap, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import '@/app/button-styles.css';
 import { generatePaymentCode } from './(actions)/payment-code';
 
@@ -222,9 +223,16 @@ const GeneratePaymentForm: React.FC<GeneratePaymentFormProps> = ({ onGenerate, i
               <CreditCard className="w-4 h-4 mr-2" />
               Pay Now
             </Button>
-            <Button variant="outline" className="btn btn-lg btn-outline w-full">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share Code
+            <Button 
+              variant="outline" 
+              className="btn btn-lg btn-outline w-full"
+              onClick={() => {
+                navigator.clipboard.writeText(generatedPayment.code);
+                toast.success('Payment code copied to clipboard!');
+              }}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Code
             </Button>
           </div>
         </div>
@@ -462,10 +470,20 @@ const ZellePayInterface: React.FC = () => {
   const generatePaymentMutation = useMutation({
     mutationFn: async (amount: number) => {
       const data = await generatePaymentCode(amount)
+     
+    
       return data
     },
     onSuccess: (data) => {
-      setGeneratedPayment(data);
+      
+      setGeneratedPayment({
+        amount: data.amount,
+        code: data.id,
+        fees: data.amount * 0.05,
+        total: data.amount + (data.amount * 0.05),
+        createdAt: data.created_at,
+        expiresAt: data.created_at + 12 * 60 * 60 * 1000
+      });
     }
   });
 

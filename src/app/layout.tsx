@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import '@worldcoin/mini-apps-ui-kit-react/styles.css';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const geistSans = Geist({
@@ -36,6 +37,7 @@ export default async function RootLayout({
             <div className="relative z-10 w-full">
               <Header />
               <main className="flex-1 w-full overflow-x-hidden">{children}</main>
+              <Toaster position="top-center" richColors />
             </div>
           </div>
         </ClientProviders>

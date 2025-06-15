@@ -6,3 +6,5 @@ export const CONSTANTS = {
         }
     }
 } as const;
+
+export const API_URL = 'https://api.normie.tech';
