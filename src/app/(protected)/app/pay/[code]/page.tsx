@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { getPaymentDetails, captureZellePayment } from '../../(actions)/payment-code';
 import { toast } from 'sonner';
+import { useParams } from 'next/navigation';
 
 // Types
 
@@ -281,14 +282,8 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({ payment, onConfirmPayme
   );
 };
 
-export default function  PaymentPage({
-  params,
-}: {
-  params: { code: string }
-}) {
-  if(!params.code){
-    return <div>Payment code not found</div>
-  }
+export default function PaymentPage() {
+  const params = useParams<{ code: string }>()
   // Get payment code from URL params
   const [paymentCode] = useState<string>(params.code);
   const [sparkleActive, setSparkleActive] = useState<boolean>(false);

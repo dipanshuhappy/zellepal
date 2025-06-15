@@ -138,12 +138,7 @@ const PaymentCodeInput: React.FC<PaymentCodeInputProps> = ({ onCodeSubmit, isLoa
         </div>
       )}
       
-      <Alert className="border-blue-200 bg-blue-50">
-        <Zap className="h-4 w-4 text-blue-500" />
-        <AlertDescription className="text-blue-700">
-          Try entering <code className="px-1 py-0.5 bg-blue-100 rounded font-mono">DEMO1</code> to see the demo flow
-        </AlertDescription>
-      </Alert>
+
     </div>
   );
 };
