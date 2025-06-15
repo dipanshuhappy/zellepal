@@ -5,11 +5,16 @@ import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from 'next-themes';
 import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { WagmiProvider } from 'wagmi';
+import { config } from '@/lib/wagmi';
 
 const ErudaProvider = dynamic(
   () => import('@/providers/Eruda').then((c) => c.ErudaProvider),
   { ssr: false },
 );
+
+const queryClient = new QueryClient();
 
 // Define props for ClientProviders
 interface ClientProvidersProps {
@@ -39,14 +44,18 @@ export default function ClientProviders({
   return (
     <ErudaProvider>
       <MiniKitProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SessionProvider session={session}>{children}</SessionProvider>
-        </ThemeProvider>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <SessionProvider session={session}>{children}</SessionProvider>
+            </ThemeProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
       </MiniKitProvider>
     </ErudaProvider>
   );

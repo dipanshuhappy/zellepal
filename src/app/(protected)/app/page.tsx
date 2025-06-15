@@ -5,15 +5,18 @@ import { Transaction } from '@/components/Transaction';
 import { UserInfo } from '@/components/UserInfo';
 import { Verify } from '@/components/Verify';
 import { ViewPermissions } from '@/components/ViewPermissions';
-import { Marble, TopBar } from '@worldcoin/mini-apps-ui-kit-react';
+import { Chip } from '@worldcoin/mini-apps-ui-kit-react';
 
 export default async function Home() {
   const session = await auth();
 
   return (
     <>
-      
-     
+      <Page>
+        <Page.Main>
+          <Chip label='Hello' />
+        </Page.Main>
+      </Page>
     </>
   );
 }

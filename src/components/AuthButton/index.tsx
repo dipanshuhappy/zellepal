@@ -92,9 +92,14 @@ export const AuthButton = () => {
           >
             <div className="flex items-center gap-2 min-w-0">
               <User className="w-5 h-5 shrink-0" />
-              <span className="truncate">
-                {session.user.name || session.user.email || 'User'}
-              </span>
+              <div className="flex flex-col items-start">
+                <span className="truncate text-sm sm:text-base">
+                  {session.user.name || session.user.email || 'User'}
+                </span>
+                <span className="text-xs text-muted-foreground truncate max-w-[180px]">
+                  {session.user.id?.slice(0, 6)}...{session.user.id?.slice(-4)}
+                </span>
+              </div>
             </div>
             <ChevronDown className="w-4 h-4 shrink-0" />
           </Button>
@@ -103,11 +108,9 @@ export const AuthButton = () => {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
-                {session.user.name || 'User'}
+                {session.user.username || 'User'}
               </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {session.user.email}
-              </p>
+              
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />

@@ -6,7 +6,7 @@ import { MiniKit } from '@worldcoin/minikit-js';
 import { useWaitForTransactionReceipt } from '@worldcoin/minikit-react';
 import { useEffect, useState } from 'react';
 import { createPublicClient, http } from 'viem';
-import { worldchain } from 'viem/chains';
+import { worldchain } from 'wagmi/chains';
 
 /**
  * This component is used to get a token from a contract

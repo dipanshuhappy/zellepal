@@ -28,12 +28,15 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
+      <body className={`${geistSans.variable} ${geistMono.variable} overflow-x-hidden`}>
         <ClientProviders session={session}>
-          <div className="relative flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
+          <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+            <div className="fixed inset-0 w-screen bg-gradient-to-br from-blue-100 via-blue-50 to-white animate-gradient-shift" />
+            <div className="relative z-10 w-full">
+              <Header />
+              <main className="flex-1 w-full overflow-x-hidden">{children}</main>
+            </div>
           </div>
         </ClientProviders>
       </body>
