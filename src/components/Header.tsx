@@ -27,7 +27,7 @@ export function Header() {
      
         {/* Auth Button & Mode Toggle */}
         <div className="flex items-center gap-2">
-          <ModeToggle />
+          {/* <ModeToggle /> */}
           <AuthButton />
         </div>
       </div>
