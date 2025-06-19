@@ -2,6 +2,7 @@
 import { walletAuth } from '@/auth/wallet';
 import { Button, LiveFeedback } from '@worldcoin/mini-apps-ui-kit-react';
 import { useMiniKit } from '@worldcoin/minikit-js/minikit-provider';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 
 /**
@@ -12,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 export const WorldSignInButton = () => {
   const [isPending, setIsPending] = useState(false);
   const { isInstalled } = useMiniKit();
+  const {status} = useSession()
 
   const onClick = useCallback(async () => {
     if (!isInstalled || isPending) {
@@ -29,22 +31,7 @@ export const WorldSignInButton = () => {
     setIsPending(false);
   }, [isInstalled, isPending]);
 
-  useEffect(() => {
-    const authenticate = async () => {
-      if (isInstalled && !isPending) {
-        setIsPending(true);
-        try {
-          await walletAuth();
-        } catch (error) {
-          console.error('Auto wallet authentication error', error);
-        } finally {
-          setIsPending(false);
-        }
-      }
-    };
-
-    authenticate();
-  }, [isInstalled, isPending]);
+  
 
   return (
     <LiveFeedback

@@ -22,6 +22,8 @@ export const AuthButton = () => {
   const { isInstalled } = useMiniKit();
   const { data: session, status } = useSession();
 
+  
+
   const onClick = useCallback(async () => {
     if (!isInstalled || isPending) {
       return;
@@ -37,22 +39,7 @@ export const AuthButton = () => {
     setIsPending(false);
   }, [isInstalled, isPending]);
 
-  useEffect(() => {
-    const authenticate = async () => {
-      if (isInstalled && !isPending && status === 'unauthenticated') {
-        setIsPending(true);
-        try {
-          await walletAuth();
-        } catch (error) {
-          console.error('Auto wallet authentication error', error);
-        } finally {
-          setIsPending(false);
-        }
-      }
-    };
-
-    authenticate();
-  }, [isInstalled, isPending, status]);
+ 
 
   if (status === 'authenticated' && session?.user) {
     return (
