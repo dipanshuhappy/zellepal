@@ -32,10 +32,10 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
       <body className={`${geistSans.variable} ${geistMono.variable} overflow-x-hidden`}>
         <ClientProviders session={session}>
-          <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+          <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-gradient-to-br from-blue-50 via-white to-indigo-50">
             <div className="fixed inset-0 w-screen-" />
             <div className="relative z-10 w-full">
-              <Header />
+              
               <main className="flex-1 w-full overflow-x-hidden">{children}</main>
               <Toaster position="top-center" richColors />
             </div>
