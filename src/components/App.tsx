@@ -99,6 +99,8 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
         transactionId: data?.id ?? ""
       })
 
+      console.log({paymentDetails})
+
       
       return {
         amount: data?.amount ?? 0,
@@ -116,10 +118,16 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
   });
   const verifyPaymentMutation = useMutation({
     mutationFn:captureZellePayment,
-    onSuccess: async () =>{
-      toast.success('Transaction Verified, Redirecting to profile')
-      await sleep(2000)
+    onSuccess: async (data) =>{
+      const {success,message} = data
+      if(success){
+        toast.success(message)
+        await sleep(2000)
       window.location.reload()
+      }
+      else if(!success){
+        toast.error(message)
+      }  
     },
     onError:(error)=>{
       toast.error(error.message)
@@ -347,7 +355,11 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
             >
                 <div className="bg-green-400 border-2  rounded-3xl text-white">
               <WorldButton
-                onClick={() => verifyPaymentMutation.mutate(paymentDetails.transactionId)}
+                onClick={async () => {
+                  console.log({paymentDetails})
+                  const res = await verifyPaymentMutation.mutateAsync(paymentDetails.transactionId)
+                 
+                }}
                 className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
                 disabled={verifyPaymentMutation.isPending}
               >

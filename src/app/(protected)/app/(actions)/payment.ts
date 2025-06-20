@@ -181,6 +181,7 @@ export async function captureZellePayment(transactionId: string) {
   if (!session) {
     return { success: false, message: "Unauthorized" };
   }
+  console.log({transactionId})
 
  
   
