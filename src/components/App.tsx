@@ -5,7 +5,7 @@ import { UserInfo } from "./UserInfo";
 import { Input } from "./ui/input";
 import { Separator } from "./ui/separator";
 import { useSession } from "next-auth/react";
-import { Marble, Button as WorldButton, NumberPad } from '@worldcoin/mini-apps-ui-kit-react';
+import { Marble, Button as WorldButton, NumberPad, LiveFeedback } from '@worldcoin/mini-apps-ui-kit-react';
 import { Button } from './ui/button';
 import { useBalance } from "wagmi";
 import { CONSTANTS } from "@/lib/constants"
@@ -19,6 +19,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { generatePayment, getPaymentDetails } from "@/app/(protected)/app/(actions)/payment";
 
 // Zod schema for amount validation
 const amountSchema = z.object({
@@ -33,12 +34,23 @@ type AmountFormData = z.infer<typeof amountSchema>;
 
 // Mock API functions
 const generatePaymentDetails = async (amount: number) => {
-  await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
+  const {
+    data,
+    error,
+    success
+
+  } = await generatePayment(amount);
+
+  if(!success || error){
+    throw new Error(error?.toString())
+  }
+  
+  
   return {
-    amount: amount.toString(),
-    zelleId: 'zelle@example.com',
-    recipientName: 'John Doe',
-    transactionId: `tx_${Date.now()}`
+    amount: data?.amount ?? 0,
+    zelleId:data?.recipient.zelleId ?? "",
+    recipientName: data?.recipient.name ?? "",
+    transactionId: data?.id ?? ""
   };
 };
 
@@ -163,6 +175,14 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
               </div>
 
               {/* Continue Button */}
+              <LiveFeedback
+  className="w-full"
+  label={{
+    failed: 'Failed',
+    pending: 'Generating...',
+    success: 'Success'
+  }}
+>
               <Button
                 onClick={handleSubmit(onSubmit)}
                 disabled={!isValid || currentAmount === 0 || generatePaymentMutation.isPending}
@@ -177,6 +197,7 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
                   'Continue'
                 )}
               </Button>
+              </LiveFeedback>
             </div>
           </motion.div>
         )}
@@ -221,7 +242,7 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => copyToClipboard(generatePaymentMutation.data.amount, 'amount', 'Amount copied!')}
+                  onClick={() => copyToClipboard(generatePaymentMutation.data.amount.toString(), 'amount', 'Amount copied!')}
                   className="bg-white/20 hover:bg-white/30 text-white h-8 w-8 p-0 rounded-lg"
                 >
                   {copyStatus.field === 'amount' && copyStatus.status ? (
@@ -280,12 +301,14 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
               transition={{ delay: 0.3 }}
               className="mt-auto"
             >
-              <Button
+                <div className="bg-green-400 border-2 border-radius rounded-md">
+              <WorldButton
                 onClick={() => toast.success('Payment verification started!')}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-2xl"
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-black"
               >
                 Verify Payment
-              </Button>
+              </WorldButton>
+              </div>
             </motion.div>
           </motion.div>
         )}

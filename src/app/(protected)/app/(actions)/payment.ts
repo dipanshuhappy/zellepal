@@ -97,7 +97,7 @@ type Payment = {
     status: 'pending' | 'completed' | 'failed';
     expiresAt: string;
 };
-export async function getPaymentDetails(code:string){
+export async function getPaymentDetails(transactionId: string){
     const session = await auth();
     if(!session){
         return {
@@ -106,43 +106,13 @@ export async function getPaymentDetails(code:string){
             data:null
         }
     }   
-    const supabase = await createClient();
-    const { data, error } = await supabase
-    .from("payment_codes")
-    .select()
-    .eq("id",code)
-    .single();
-    console.log({data,error})
-    if(error){
-        return {
-            success:false,
-            error:error.message,
-            data:null
-        }
-    }
-    if(!data){
-        console.log("Payment code not found")
-        return {
-            success:false,
-            error:"Payment code not found",
-            data:null
-        }
-    }
-    if(!data.externalTransactionId){
-        console.log("Payment code not found")
-        return {
-            success:false,
-            error:"Payment code not found",
-            data:null
-        }
-    }
     const zelleDetails = await normieTechClient.GET(`/v1/payment/5/details/{transactionId}`,{
         params:{
             header:{
                 "x-api-key":process.env.NORMIE_API!
             },
             path:{
-                transactionId:data.externalTransactionId
+                transactionId:transactionId
             }
         }
     })
@@ -193,8 +163,8 @@ export async function getPaymentDetails(code:string){
            amount:zelleDetailsData.data.amount!,
            fees: fees,
            total:total,
-           code:data.id,
-           id:data.id,
+           code:transactionId,
+           id:transactionId,
            recipient:{
             name:lpDetailsData.data.zelleName!,
             zelleId:lpDetailsData.data.zelleId!,
@@ -293,7 +263,7 @@ export async function captureZellePayment(code: string) {
   }
 }
 
-export async function generatePaymentCode(amount: number) {
+export async function generatePayment(amount: number) {
   const session = await auth();
   if (!session) {
     throw new Error("Unauthorized");
@@ -396,38 +366,14 @@ export async function generatePaymentCode(amount: number) {
         data:null
     }
   }
-  const paymentCode = {
-    id: nanoid(),
-    amount: Number(zelleDetailsData.data.amount?.toFixed(2)),
-    payout_address: payoutAddress,
-    created_at: new Date().toISOString(),
-    externalTransactionId:checkoutData.transactionId
-  };
+  const details = await getPaymentDetails(zelleDetails.data.data.transactionId)
+  
 
-  const { data, error } = await supabase
-    .from("payment_codes")
-    .insert(paymentCode)
-    .select()
-    .single();
 
-  if (error) {
-    return {
-        success:false,
-        error:error.message,
-        data:null
-    }
-  }
-  if(!data){
-    return {
-        success:false,
-        error:"Payment code not found",
-        data:null
-    }
-  }
 
   return {
     success:true,
     error:null,
-    data:data
+    data:details.data
   }
 }

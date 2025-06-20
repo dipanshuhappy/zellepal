@@ -17,16 +17,16 @@ export function Header() {
       <TopBar
         className='shadow-lg'
         endAdornment={<AuthButton />}
-        startAdornment={
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="size-12 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
-            onClick={() => router.back()}
-          >
-            <ArrowLeft className='h-9 w-10'/>
-          </Button>
-        }
+        // startAdornment={
+        //   <Button 
+        //     variant="ghost" 
+        //     size="icon" 
+        //     className="size-12 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+        //     onClick={() => router.back()}
+        //   >
+        //     <ArrowLeft className='h-9 w-10'/>
+        //   </Button>
+        // }
         title="ZellePal"
       />
     </div>
