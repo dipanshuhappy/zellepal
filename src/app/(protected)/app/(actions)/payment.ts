@@ -176,29 +176,20 @@ export async function getPaymentDetails(transactionId: string){
     }
 }
 
-export async function captureZellePayment(code: string) {
+export async function captureZellePayment(transactionId: string) {
   const session = await auth();
   if (!session) {
     return { success: false, message: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+ 
   
 
-  console.log("hiiii")
+
   try {
-    // Get the payment code details
-    const { data: codeData, error: codeError } = await supabase
-      .from("payment_codes")
-      .select()
-      .eq("id", code)
-      .single();
+    
+    
 
-    if (codeError || !codeData?.externalTransactionId) {
-      return { success: false, message: "Invalid payment code" };
-    }
-
-    const transactionId = codeData.externalTransactionId;
 
     // Confirm the payment
     const confirmResponse = await normieTechClient.POST('/v1/payment/6/zelle-mail/confirm', {

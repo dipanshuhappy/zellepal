@@ -19,7 +19,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { generatePayment, getPaymentDetails } from "@/app/(protected)/app/(actions)/payment";
+import { captureZellePayment, generatePayment, getPaymentDetails } from "@/app/(protected)/app/(actions)/payment";
+import { useRouter } from "next/navigation";
+import { sleep } from "@/lib/utils";
 
 // Zod schema for amount validation
 const amountSchema = z.object({
@@ -32,7 +34,7 @@ const amountSchema = z.object({
 
 type AmountFormData = z.infer<typeof amountSchema>;
 
-// Mock API functions
+
 const generatePaymentDetails = async (amount: number) => {
   const {
     data,
@@ -71,9 +73,40 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
 
   const { control, watch, setValue, handleSubmit, formState: { errors, isValid } } = form;
   const currentAmount = watch('amount');
+  const [paymentDetails, setPaymentDetails] = useState({
+    amount: 0,
+    zelleId: "",
+    recipientName: "",
+    transactionId: ""
+  })
+  const router = useRouter()
   
   const generatePaymentMutation = useMutation({
-    mutationFn: generatePaymentDetails,
+    mutationFn: async(amount:number)=>{
+      const {
+        data,
+        error,
+        success
+      } = await generatePayment(amount);
+    
+      if(!success || error){
+        throw new Error(error?.toString())
+      }
+      setPaymentDetails({
+        amount: data?.amount ?? 0,
+        zelleId:data?.recipient.zelleId ?? "",
+        recipientName: data?.recipient.name ?? "",
+        transactionId: data?.id ?? ""
+      })
+
+      
+      return {
+        amount: data?.amount ?? 0,
+        zelleId:data?.recipient.zelleId ?? "",
+        recipientName: data?.recipient.name ?? "",
+        transactionId: data?.id ?? ""
+      };  
+    },
     onSuccess: () => {
       setStep('payment-details');
     },
@@ -81,6 +114,17 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
       toast.error('Failed to generate payment details');
     }
   });
+  const verifyPaymentMutation = useMutation({
+    mutationFn:captureZellePayment,
+    onSuccess: async () =>{
+      toast.success('Transaction Verified, Redirecting to profile')
+      await sleep(2000)
+      window.location.reload()
+    },
+    onError:(error)=>{
+      toast.error(error.message)
+    }
+  })
 
   const handleNumberPadValue = (value: string) => {
     console.log({value})
@@ -301,12 +345,20 @@ function WalletTab({ amount, setAmount, copyToClipboard, copyStatus }: {
               transition={{ delay: 0.3 }}
               className="mt-auto"
             >
-                <div className="bg-green-400 border-2 border-radius rounded-md">
+                <div className="bg-green-400 border-2  rounded-3xl text-white">
               <WorldButton
-                onClick={() => toast.success('Payment verification started!')}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-black"
+                onClick={() => verifyPaymentMutation.mutate(paymentDetails.transactionId)}
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={verifyPaymentMutation.isPending}
               >
-                Verify Payment
+                {verifyPaymentMutation.isPending ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin text-white" />
+                    Verifying...
+                  </div>
+                ) : (
+                  'Verify Payment'
+                )}
               </WorldButton>
               </div>
             </motion.div>
